@@ -145,11 +145,18 @@ export function App() {
 
       {/* Footer */}
       <footer className="border-t border-emerald-950/80 bg-[#021710]/95 py-8 px-4 text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-300">Guten App: Deutsche Akademie</span>
             <span>•</span>
             <span className="text-slate-400">Autonome Plattform für deutsches Sprachtraining</span>
+          </div>
+
+          {/* Creator & Tester Credits */}
+          <div className="flex items-center gap-2 text-slate-300">
+            <span>Created by <strong className="font-bold text-slate-200">ANAND MOHANDAS</strong></span>
+            <span className="text-slate-500">|</span>
+            <span>Tester: <strong className="font-bold text-slate-200">Gayathri</strong></span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-400">
