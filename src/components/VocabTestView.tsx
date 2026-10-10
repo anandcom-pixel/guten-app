@@ -66,6 +66,11 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
     vocabId: string;
   } | null>(null);
   const [matchingPairsLeft, setMatchingPairsLeft] = useState<number>(0);
+  const [completedLessonIds, setCompletedLessonIds] = useState<string[]>(
+    srsService.getCompletedLessonIds()
+  );
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [showTestGrammarTip, setShowTestGrammarTip] = useState<boolean>(false);
 
   const currentLesson = CURRICULUM_DATA.find(l => l.id === selectedLessonId) || CURRICULUM_DATA[0];
 
@@ -74,6 +79,13 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
       setSelectedLessonId(initialLesson.id);
     }
   }, [initialLesson]);
+
+  useEffect(() => {
+    const unsub = srsService.subscribe(() => {
+      setCompletedLessonIds(srsService.getCompletedLessonIds());
+    });
+    return () => unsub();
+  }, []);
 
   // Generate Questions for the chosen lesson and test type
   const startTest = () => {
@@ -294,6 +306,8 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
     setIsTestActive(false);
 
     if (percentage >= 70) {
+      srsService.markLessonCompleted(selectedLessonId);
+      setCompletedLessonIds(srsService.getCompletedLessonIds());
       soundEffects.playVictory();
       try {
         confetti({
@@ -349,6 +363,8 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
       if (remaining === 0) {
         soundEffects.playVictory();
         srsService.recordTestCompleted(100);
+        srsService.markLessonCompleted(selectedLessonId);
+        setCompletedLessonIds(srsService.getCompletedLessonIds());
         try {
           confetti({
             particleCount: 80,
@@ -495,6 +511,7 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {CURRICULUM_DATA.map(lesson => {
                 const isSelected = lesson.id === selectedLessonId;
+                const isCompleted = completedLessonIds.includes(lesson.id);
                 return (
                   <div
                     key={lesson.id}
@@ -505,13 +522,23 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
                     className={`p-4 rounded-2xl border cursor-pointer transition-all ${
                       isSelected
                         ? 'bg-amber-950/40 border-amber-500 shadow-lg ring-1 ring-amber-500/50'
+                        : isCompleted
+                        ? 'bg-slate-950/60 border-emerald-500/40 hover:bg-slate-800/60'
                         : 'bg-slate-950/40 border-slate-800 hover:bg-slate-800/60'
                     }`}
                   >
                     <div className="flex items-center justify-between text-[11px] font-bold">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-300">
-                        {lesson.level}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-300">
+                          {lesson.level}
+                        </span>
+                        {isCompleted && (
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            Erledigt
+                          </span>
+                        )}
+                      </div>
                       <span className="text-slate-400">{lesson.vocabulary.length} Vokabeln</span>
                     </div>
                     <div className="mt-2 font-bold text-sm text-white">{lesson.title}</div>
@@ -525,7 +552,7 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
           <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-900/30 flex items-start gap-3">
             <Brain className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div className="text-xs text-slate-300 leading-relaxed">
-              <strong className="text-white">Intelligente Leitner-Spaced-Repetition & Fehler-Tresor:</strong> Falsch beantwortete Vokabeln und verwechselte Artikel (der/die/das) werden sofort automatisch in den Mistake Vault und in Leitner Box 1 übertragen!
+              <strong className="text-white">Intelligente Leitner-Spaced-Repetition & Fehler-Tresor:</strong> Falsch beantwortete Vokabeln und verwechselte Artikel (der/die/das) werden sofort automatisch in den Mistake Vault und in Leitner Box 1 übertragen! Bei mindestens 70% Erfolg wird das Modul automatisch als erledigt (✓) markiert.
             </div>
           </div>
 
@@ -623,7 +650,20 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
                     : 'Diktat & Rechtschreibung'}
                 </span>
               </span>
-              <span>Punkte: {score} / {questions.length}</span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEffects.playTap();
+                    setShowTestGrammarTip(!showTestGrammarTip);
+                  }}
+                  className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 flex items-center gap-1 transition-all"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{showTestGrammarTip ? 'Tipp verbergen' : 'Artikel- & Kasus-Tipp'}</span>
+                </button>
+                <span>Punkte: {score} / {questions.length}</span>
+              </div>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden">
               <div
@@ -632,6 +672,32 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
               />
             </div>
           </div>
+
+          {/* Collapsible Quick Grammar Hint in Test */}
+          {showTestGrammarTip && (
+            <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-amber-500/40 text-xs space-y-1.5 animate-in fade-in">
+              <div className="font-bold text-amber-300 flex items-center justify-between">
+                <span>💡 Schnellhilfe: Typische Artikel-Endungen im Deutschen</span>
+                <button
+                  type="button"
+                  onClick={() => setShowTestGrammarTip(false)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-300">
+                <div><strong className="text-sky-400">der (mask.):</strong> Endungen <em>-er, -en, -ig, -ling, -or</em></div>
+                <div><strong className="text-rose-400">die (fem.):</strong> Endungen <em>-ung, -heit, -keit, -schaft, -ion, -e</em></div>
+                <div><strong className="text-amber-400">das (neut.):</strong> Endungen <em>-chen, -lein, -um, -ment</em></div>
+              </div>
+              {currentQ.targetVocab.caseHint && (
+                <div className="text-[11px] text-indigo-300 font-semibold pt-1 border-t border-slate-800">
+                  Hinweis zu diesem Wort: {currentQ.targetVocab.caseHint}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Question Prompt */}
           <div className="p-6 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-3">
@@ -652,17 +718,26 @@ export const VocabTestView: React.FC<VocabTestViewProps> = ({
                 )}
               </div>
 
-              {/* Native Voice Audio Button */}
+              {/* Native Voice Audio Button with Active Playback Feedback */}
               <button
                 type="button"
                 onClick={() => {
                   soundEffects.playTap();
-                  speechService.speak(currentQ.targetVocab.german, { rate: speechRate });
+                  setIsPlayingAudio(true);
+                  speechService.speak(currentQ.targetVocab.german, {
+                    rate: speechRate,
+                    onEnd: () => setIsPlayingAudio(false)
+                  });
                 }}
-                className="p-3.5 rounded-2xl bg-amber-600/20 border border-amber-500/40 text-amber-300 hover:bg-amber-600 hover:text-slate-950 transition-all shadow-md shrink-0"
+                className={`px-3.5 py-3 rounded-2xl border transition-all shadow-md shrink-0 flex items-center gap-1.5 ${
+                  isPlayingAudio
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-black animate-pulse ring-2 ring-amber-400/50 scale-105'
+                    : 'bg-amber-600/20 border-amber-500/40 text-amber-300 hover:bg-amber-600 hover:text-slate-950'
+                }`}
                 title="Aussprache anhören"
               >
-                <Volume2 className="w-5 h-5" />
+                <Volume2 className={`w-5 h-5 ${isPlayingAudio ? 'animate-bounce' : ''}`} />
+                {isPlayingAudio && <span className="text-xs font-black">Spielt...</span>}
               </button>
             </div>
           </div>

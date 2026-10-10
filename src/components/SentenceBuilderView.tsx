@@ -33,6 +33,7 @@ export const SentenceBuilderView: React.FC<SentenceBuilderViewProps> = ({
   const [draggedWordIndex, setDraggedWordIndex] = useState<{ source: 'available' | 'assembled'; index: number } | null>(null);
   const [validationState, setValidationState] = useState<'correct' | 'incorrect' | null>(null);
   const [showHint, setShowHint] = useState<boolean>(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
 
   const filteredData = SENTENCE_BUILDER_DATA.filter(
     item => selectedLevel === 'ALL' || item.level === selectedLevel
@@ -172,7 +173,11 @@ export const SentenceBuilderView: React.FC<SentenceBuilderViewProps> = ({
 
   const handlePlayAudio = () => {
     soundEffects.playTap();
-    speechService.speak(currentItem.germanCorrect, { rate: speechRate });
+    setIsPlayingAudio(true);
+    speechService.speak(currentItem.germanCorrect, {
+      rate: speechRate,
+      onEnd: () => setIsPlayingAudio(false)
+    });
   };
 
   return (
@@ -245,10 +250,15 @@ export const SentenceBuilderView: React.FC<SentenceBuilderViewProps> = ({
             <button
               type="button"
               onClick={handlePlayAudio}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold ${
+                isPlayingAudio
+                  ? 'bg-amber-500 text-slate-950 animate-pulse ring-2 ring-amber-400/50 shadow-sm'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+              }`}
               title="Aussprache anhören"
             >
-              <Volume2 className="w-4 h-4 text-amber-400" />
+              <Volume2 className={`w-4 h-4 ${isPlayingAudio ? 'text-slate-950 animate-bounce' : 'text-amber-400'}`} />
+              <span>{isPlayingAudio ? 'Spielt...' : 'Anhören'}</span>
             </button>
           </div>
         </div>

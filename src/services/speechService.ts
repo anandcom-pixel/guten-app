@@ -125,21 +125,47 @@ class SpeechService {
     } = {}
   ): Promise<void> {
     return new Promise((resolve) => {
+      // Clean text: strip markdown if any
+      const cleanText = text.replace(/[*_#`]/g, '').trim();
+      if (!cleanText) {
+        options.onEnd?.();
+        resolve();
+        return;
+      }
+
       if (!this.synth) {
         console.warn('SpeechSynthesis is not supported on this device/browser.');
-        resolve();
+        this.notifySpeakingState(true);
+        setTimeout(() => {
+          this.notifySpeakingState(false);
+          options.onEnd?.();
+          resolve();
+        }, 900);
         return;
       }
 
       // Stop any ongoing speech
       this.stop();
 
-      // Clean text: strip markdown if any
-      const cleanText = text.replace(/[*_#`]/g, '').trim();
-      if (!cleanText) {
-        resolve();
-        return;
-      }
+      const startTime = Date.now();
+      const minVisualDuration = 900;
+      let finished = false;
+
+      const finishPlayback = () => {
+        if (finished) return;
+        finished = true;
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, minVisualDuration - elapsed);
+        setTimeout(() => {
+          this.notifySpeakingState(false);
+          this.currentUtterance = null;
+          options.onEnd?.();
+          resolve();
+        }, remaining);
+      };
+
+      // Immediately trigger speaking visual state
+      this.notifySpeakingState(true);
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = 'de-DE';
@@ -156,29 +182,27 @@ class SpeechService {
       };
 
       utterance.onend = () => {
-        this.notifySpeakingState(false);
-        this.currentUtterance = null;
-        options.onEnd?.();
-        resolve();
+        finishPlayback();
       };
 
       utterance.onerror = (e) => {
         console.warn('TTS error event:', e);
-        this.notifySpeakingState(false);
-        this.currentUtterance = null;
-        options.onEnd?.();
-        resolve();
+        finishPlayback();
       };
 
       this.currentUtterance = utterance;
 
-      // Chrome bug workaround for longer utterances
+      // Safety fallback timeout in case browser speech engine hangs
+      const maxDuration = Math.max(4000, cleanText.length * 120);
+      setTimeout(() => {
+        finishPlayback();
+      }, maxDuration);
+
       try {
         this.synth.speak(utterance);
       } catch (err) {
         console.error('Failed to trigger speech:', err);
-        this.notifySpeakingState(false);
-        resolve();
+        finishPlayback();
       }
     });
   }

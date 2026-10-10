@@ -38,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(soundEffects.isEnabled());
   const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(speechService.getIsSpeaking());
 
   useEffect(() => {
     const updateVoices = () => {
@@ -50,8 +51,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     };
 
     updateVoices();
-    const unsub = speechService.onVoiceChange(updateVoices);
-    return () => unsub();
+    const unsubVoice = speechService.onVoiceChange(updateVoices);
+    const unsubSpeak = speechService.onSpeakingChange((speaking) => {
+      setIsSpeaking(speaking);
+    });
+    return () => {
+      unsubVoice();
+      unsubSpeak();
+    };
   }, []);
 
   const handleToggleSound = () => {
@@ -124,6 +131,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Audio & Settings Controls */}
           <div className="flex items-center gap-2">
+            {/* Active TTS Playback Indicator */}
+            {isSpeaking && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-300 text-xs font-bold animate-pulse shadow-sm shadow-amber-500/20">
+                <Volume2 className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                <span className="hidden sm:inline">Audio läuft...</span>
+              </div>
+            )}
+
             {/* Speed Selector */}
             <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 text-xs font-medium">
               <button

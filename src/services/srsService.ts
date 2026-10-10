@@ -3,6 +3,7 @@ import { CURRICULUM_DATA } from '../data/curriculumData';
 
 const SRS_CARDS_KEY = 'gutenapp_srs_cards_v1';
 const USER_STATS_KEY = 'gutenapp_user_stats_v1';
+const COMPLETED_LESSONS_KEY = 'gutenapp_completed_lessons_v1';
 
 const INITIAL_BADGES: Badge[] = [
   {
@@ -57,6 +58,7 @@ const INITIAL_BADGES: Badge[] = [
 
 class SRSService {
   private cards: LeitnerCard[] = [];
+  private completedLessons: Set<string> = new Set();
   private stats: UserStats = {
     xp: 60,
     streak: 1,
@@ -103,6 +105,12 @@ class SRSService {
         this.checkStreak();
       } else {
         this.saveStats();
+      }
+
+      const savedCompleted = localStorage.getItem(COMPLETED_LESSONS_KEY);
+      if (savedCompleted) {
+        const parsed: string[] = JSON.parse(savedCompleted);
+        this.completedLessons = new Set(parsed);
       }
     } catch (e) {
       console.warn('Failed to parse local storage state:', e);
@@ -320,10 +328,49 @@ class SRSService {
     this.saveStats();
   }
 
+  private saveCompletedLessons() {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(COMPLETED_LESSONS_KEY, JSON.stringify(Array.from(this.completedLessons)));
+    this.notify();
+  }
+
+  public isLessonCompleted(lessonId: string): boolean {
+    return this.completedLessons.has(lessonId);
+  }
+
+  public getCompletedLessonIds(): string[] {
+    return Array.from(this.completedLessons);
+  }
+
+  public markLessonCompleted(lessonId: string): boolean {
+    if (!this.completedLessons.has(lessonId)) {
+      this.completedLessons.add(lessonId);
+      this.addXP(25);
+      this.saveCompletedLessons();
+      return true;
+    }
+    return false;
+  }
+
+  public toggleLessonCompleted(lessonId: string): boolean {
+    if (this.completedLessons.has(lessonId)) {
+      this.completedLessons.delete(lessonId);
+      this.saveCompletedLessons();
+      return false;
+    } else {
+      this.completedLessons.add(lessonId);
+      this.addXP(25);
+      this.saveCompletedLessons();
+      return true;
+    }
+  }
+
   public resetAllProgress() {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(SRS_CARDS_KEY);
     localStorage.removeItem(USER_STATS_KEY);
+    localStorage.removeItem(COMPLETED_LESSONS_KEY);
+    this.completedLessons.clear();
     this.seedInitialCards();
     this.stats = {
       xp: 60,
