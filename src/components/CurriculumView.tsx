@@ -183,40 +183,64 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
     );
   };
 
+  const firstVocab = currentLesson?.vocabulary[0];
+
   return (
     <div className="space-y-8 animate-in fade-in pb-16">
-      {/* Hero Header */}
-      <div className="relative rounded-3xl bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-900/40 p-6 sm:p-8 overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-amber-600/10 blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
+      {/* Hero Intro Section */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-slate-900 via-emerald-950/80 to-slate-900 border border-amber-500/30 p-6 sm:p-8 overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                Gemeinsamer Europäischer Referenzrahmen (CEFR)
+              <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                Welcome • Start Learning Instantly
               </span>
-              <span className="text-xs text-slate-400 font-medium">A1 → C1 Autonom</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                ★ A1 (Anfänger) Pre-Opened Below
+              </span>
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800/90 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
-                {totalCompletedCount}/{totalLessonsCount} Module erledigt
+                {totalCompletedCount}/{totalLessonsCount} Modules Completed
               </span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Deutsches Curriculum & Interaktive Lektionen
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+              Interactive German Lessons &amp; Pronunciation Practice from A1 to C1
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Lerne authentisches Deutsch, grammatische Artikel (der/die/das), vier Fälle (Kasus) und syntaktische Satzklammern. Jeder Satz verfügt über native Sprachausgabe per Web Speech API.
+              Master everyday conversational German, color-coded noun genders (<strong className="text-sky-300">der</strong> / <strong className="text-rose-300">die</strong> / <strong className="text-amber-300">das</strong>), and the 4 German cases.
+              We&apos;ve automatically pre-opened <strong className="text-amber-300 font-semibold">A1 (Anfänger) — Module 1</strong> below so you can start listening and practicing right away.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {firstVocab && (
+              <button
+                type="button"
+                onClick={() => handlePlayAudio(firstVocab.german, `hero-${firstVocab.id}`)}
+                className={`px-5 py-3 rounded-2xl text-sm font-bold flex items-center gap-2 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95 border ${
+                  currentlyPlayingWord === `hero-${firstVocab.id}`
+                    ? 'bg-emerald-600 text-white border-emerald-400 shadow-lg shadow-emerald-600/30 animate-pulse'
+                    : 'bg-slate-800/90 hover:bg-slate-800 text-amber-300 border-amber-400/40 hover:border-amber-300 shadow-md'
+                }`}
+              >
+                <Volume2 className={`w-4 h-4 ${currentlyPlayingWord === `hero-${firstVocab.id}` ? 'animate-bounce' : ''}`} />
+                <span>
+                  {currentlyPlayingWord === `hero-${firstVocab.id}`
+                    ? `Playing "${firstVocab.german}"...`
+                    : `Listen to First Phrase ("${firstVocab.german}")`}
+                </span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => onStartTest(currentLesson)}
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 text-sm font-black shadow-lg shadow-amber-500/25 flex items-center gap-2 transform active:scale-95 transition-all"
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 text-sm font-black shadow-lg shadow-amber-500/25 hover:shadow-amber-400/40 flex items-center gap-2 transform hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
             >
               <CheckCircle className="w-4 h-4 text-slate-950" />
-              <span>Lektion Prüfen</span>
+              <span>Start Practice Test</span>
             </button>
           </div>
         </div>
@@ -224,47 +248,62 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
 
       {/* CEFR Modular Level Selector Tabs */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Sprachniveau / Proficiency Level
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+            Select Your Skill Level (A1 Anfänger Pre-Selected)
           </span>
-          <span className="text-xs text-amber-400 font-semibold">
-            {CEFR_METADATA[selectedLevel]?.name}
+          <span className="text-xs text-amber-300 font-bold bg-slate-900/90 px-3 py-1 rounded-full border border-amber-500/30">
+            Active Level: {CEFR_METADATA[selectedLevel]?.name}
           </span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
           {levels.map(lvl => {
             const isSelected = selectedLevel === lvl;
             const meta = CEFR_METADATA[lvl];
             const lvlLessons = CURRICULUM_DATA.filter(l => l.level === lvl);
             const lvlCompleted = lvlLessons.filter(l => completedLessonIds.includes(l.id)).length;
             const isLvlAllDone = lvlLessons.length > 0 && lvlCompleted === lvlLessons.length;
+            const levelLabel =
+              lvl === 'A1'
+                ? 'Anfänger (Beginner)'
+                : lvl === 'A2'
+                ? 'Grundstufe (Elementary)'
+                : lvl === 'B1'
+                ? 'Mittelstufe (Intermediate)'
+                : lvl === 'B2'
+                ? 'Fortgeschritten (Upper-Int.)'
+                : 'Oberstufe (Advanced)';
 
             return (
               <button
                 key={lvl}
                 type="button"
                 onClick={() => handleLevelChange(lvl)}
-                className={`p-3 sm:p-4 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden transform hover:-translate-y-0.5 ${
                   isSelected
-                    ? 'bg-slate-900 border-amber-500/80 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/50'
-                    : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-900 hover:border-slate-700 text-slate-400'
+                    ? 'bg-slate-900 border-amber-500/90 shadow-xl shadow-amber-500/15 ring-2 ring-amber-500/50'
+                    : 'bg-slate-900/70 border-slate-800 hover:bg-slate-900 hover:border-slate-600 text-slate-300 hover:shadow-md'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`text-base font-black flex items-center gap-1.5 ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                <div className="flex items-center justify-between gap-1 mb-1.5">
+                  <span className={`text-base font-black flex items-center gap-1.5 ${isSelected ? 'text-white' : 'text-slate-200'}`}>
                     <span>{lvl}</span>
+                    {lvl === 'A1' && (
+                      <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        Start Here
+                      </span>
+                    )}
                     {isLvlAllDone && (
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     )}
                   </span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.badge}`}>
-                    {lvl === 'A1' ? 'Anfänger' : lvl === 'A2' ? 'Grundstufe' : lvl === 'B1' ? 'Mittelstufe' : lvl === 'B2' ? 'Fortgeschritten' : 'Oberstufe'}
+                    {levelLabel.split(' ')[0]}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
-                  <span className="line-clamp-1">{meta.subtitle}</span>
-                  <span className={`text-[10px] font-bold shrink-0 ml-1 ${lvlCompleted > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <div className="flex items-center justify-between text-[11px] text-slate-300 mt-1">
+                  <span className="line-clamp-1 font-medium">{levelLabel}</span>
+                  <span className={`text-[10px] font-bold shrink-0 ml-1 ${lvlCompleted > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
                     {lvlCompleted}/{lvlLessons.length} ✓
                   </span>
                 </div>
@@ -282,19 +321,19 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
         {/* Left Side: Lesson Selection Cards & Visual Progress Tracker */}
         <div className="lg:col-span-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-amber-400" />
-              Lektionen ({selectedLevel})
+              {selectedLevel} Core Modules
             </h2>
             <span className="text-xs font-bold text-emerald-400">
-              {completedInLevelCount} / {lessonsForLevel.length} erledigt ({levelProgressPct}%)
+              {completedInLevelCount} / {lessonsForLevel.length} Done ({levelProgressPct}%)
             </span>
           </div>
 
           {/* Visual Level Progress Bar */}
           <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1.5">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-400 font-medium">Lernfortschritt Stufe {selectedLevel}</span>
+              <span className="text-slate-300 font-medium">Level {selectedLevel} Progress</span>
               <span className="text-emerald-400 font-bold">{levelProgressPct}%</span>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-slate-800/80">
@@ -309,6 +348,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
             {lessonsForLevel.map((lesson, idx) => {
               const isSelected = lesson.id === activeLessonId;
               const isCompleted = completedLessonIds.includes(lesson.id);
+              const isFirstA1 = selectedLevel === 'A1' && idx === 0;
               return (
                 <div
                   key={lesson.id}
@@ -317,39 +357,44 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                     setActiveLessonId(lesson.id);
                     setShowCaseTooltip(false);
                   }}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 transform hover:-translate-y-0.5 ${
                     isSelected
-                      ? 'bg-slate-900 border-amber-500/70 shadow-md ring-1 ring-amber-500/40'
+                      ? 'bg-slate-900 border-amber-500/80 shadow-lg ring-2 ring-amber-500/40'
                       : isCompleted
-                      ? 'bg-slate-900/70 border-emerald-500/40 hover:bg-slate-900 hover:border-emerald-500/60'
-                      : 'bg-slate-900/50 border-slate-800 hover:bg-slate-900 hover:border-slate-700'
+                      ? 'bg-slate-900/75 border-emerald-500/40 hover:bg-slate-900 hover:border-emerald-500/60'
+                      : 'bg-slate-900/65 border-slate-800 hover:bg-slate-900 hover:border-slate-600'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-amber-300">
-                        Modul {idx + 1}
+                        Module {idx + 1}
                       </span>
+                      {isFirstA1 && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          ★ Recommended First
+                        </span>
+                      )}
                       {isCompleted && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                          Erledigt
+                          Done
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-slate-400 font-medium">
-                        {lesson.vocabulary.length} Vokabeln
+                        {lesson.vocabulary.length} phrases
                       </span>
                       <button
                         type="button"
                         onClick={(e) => handleToggleComplete(lesson.id, e)}
-                        title={isCompleted ? 'Als unerledigt markieren' : 'Modul als abgeschlossen markieren (+25 XP)'}
+                        title={isCompleted ? 'Mark module as incomplete' : 'Mark module as completed (+25 XP)'}
                         className={`p-1 rounded-lg border transition-all ${
                           isCompleted
                             ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30'
-                            : 'bg-slate-800/80 border-slate-700 text-slate-500 hover:text-emerald-300 hover:border-emerald-500/40'
+                            : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-emerald-300 hover:border-emerald-500/40'
                         }`}
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -362,19 +407,38 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                   <p className="text-xs text-slate-400 mt-1 line-clamp-2">
                     {lesson.description}
                   </p>
+                  <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
+                    <span
+                      className={`text-xs font-bold flex items-center gap-1 ${
+                        isSelected ? 'text-emerald-400' : 'text-amber-400'
+                      }`}
+                    >
+                      {isSelected ? '● Currently Open' : 'Click to Open Module →'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStartTest(lesson);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-500 text-slate-200 hover:text-slate-950 text-[11px] font-bold transition-colors duration-200"
+                    >
+                      Take Quiz
+                    </button>
+                  </div>
                 </div>
               );
             })}
           </div>
 
           {/* Quick Level Summary Box */}
-          <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-900/30 text-xs text-amber-200 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-amber-200 space-y-2 shadow-md">
             <div className="flex items-center gap-2 font-bold text-white">
               <Info className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Didaktisches Ziel {selectedLevel}</span>
+              <span>Learning Goal ({selectedLevel})</span>
             </div>
             <p className="text-slate-300 leading-relaxed">
-              {CEFR_METADATA[selectedLevel]?.subtitle}. Trainiere das Vokabular mit den Farbcodes für Nomen-Artikel (der = blau, die = rot, das = gelb) und teste dein Wissen im Test-Labor.
+              {CEFR_METADATA[selectedLevel]?.subtitle}. Practice vocabulary with color-coded noun gender badges (der = blue, die = rose, das = amber) and test your mastery in the Test Lab.
             </p>
           </div>
         </div>
@@ -385,10 +449,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
           <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   {currentLesson.level} • {currentLesson.theme}
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-300 font-medium">
                   {currentLesson.subtitle}
                 </span>
               </div>
@@ -396,23 +460,24 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                 <button
                   type="button"
                   onClick={() => handleToggleComplete(currentLesson.id)}
-                  className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 border transition-all ${
+                  className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 border transition-all duration-200 transform hover:-translate-y-0.5 ${
                     completedLessonIds.includes(currentLesson.id)
                       ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30'
-                      : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:border-emerald-500/40'
+                      : 'bg-slate-800 border-slate-700 text-slate-200 hover:text-white hover:border-emerald-500/40'
                   }`}
                 >
                   <CheckCircle2 className={`w-3.5 h-3.5 ${completedLessonIds.includes(currentLesson.id) ? 'text-emerald-400' : 'text-slate-400'}`} />
                   <span>
-                    {completedLessonIds.includes(currentLesson.id) ? 'Lektion erledigt ✓' : 'Als erledigt markieren'}
+                    {completedLessonIds.includes(currentLesson.id) ? 'Module Completed ✓' : 'Mark as Complete'}
                   </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => onStartTest(currentLesson)}
-                  className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transform hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <span>Test Starten</span>
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Start Practice Test</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -428,11 +493,11 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
             </div>
 
             {/* Grammar Spotlight */}
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-2.5">
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider flex-wrap">
                   <Lightbulb className="w-4 h-4 shrink-0" />
-                  <span>Grammatik-Fokus: {currentLesson.grammarFocus.ruleName}</span>
+                  <span>Grammar Focus: {currentLesson.grammarFocus.ruleName}</span>
                   {currentLesson.grammarFocus.caseFocus && (
                     <button
                       type="button"
@@ -440,10 +505,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                         soundEffects.playTap();
                         setShowCaseTooltip(!showCaseTooltip);
                       }}
-                      title="Klicken für Kasus-Erklärung"
-                      className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-500/30 flex items-center gap-1 transition-colors normal-case"
+                      title="Click for German Case explanation"
+                      className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-500/30 flex items-center gap-1 transition-colors normal-case"
                     >
-                      <span>Kasus: {currentLesson.grammarFocus.caseFocus}</span>
+                      <span>Case Tip: {currentLesson.grammarFocus.caseFocus}</span>
                       <HelpCircle className="w-3 h-3 text-indigo-300" />
                     </button>
                   )}
@@ -456,10 +521,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                     soundEffects.playTap();
                     setShowQuickGrammarTips(!showQuickGrammarTips);
                   }}
-                  className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 flex items-center gap-1 transition-all"
+                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 transition-all duration-200"
                 >
                   <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{showQuickGrammarTips ? 'Kurz-Tipps ausblenden' : 'Grammatik-Spickzettel'}</span>
+                  <span>{showQuickGrammarTips ? 'Hide Grammar Tips' : 'Quick Grammar Tips'}</span>
                   {showQuickGrammarTips ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
               </div>
@@ -468,7 +533,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
               {showCaseTooltip && currentLesson.grammarFocus.caseFocus && CASE_EXPLANATIONS[currentLesson.grammarFocus.caseFocus] && (
                 <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/40 text-xs space-y-1 animate-in fade-in">
                   <div className="flex items-center justify-between text-indigo-200 font-bold">
-                    <span>🔍 Kasus-Hilfe: {currentLesson.grammarFocus.caseFocus} ({CASE_EXPLANATIONS[currentLesson.grammarFocus.caseFocus].question})</span>
+                    <span>🔍 Case Helper: {currentLesson.grammarFocus.caseFocus} ({CASE_EXPLANATIONS[currentLesson.grammarFocus.caseFocus].question})</span>
                     <button
                       type="button"
                       onClick={() => setShowCaseTooltip(false)}
@@ -479,7 +544,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                   </div>
                   <p className="text-slate-300">{CASE_EXPLANATIONS[currentLesson.grammarFocus.caseFocus].role}</p>
                   <div className="text-[11px] font-mono text-amber-300 pt-0.5">
-                    Artikel: {CASE_EXPLANATIONS[currentLesson.grammarFocus.caseFocus].articles}
+                    Articles: {CASE_EXPLANATIONS[currentLesson.grammarFocus.caseFocus].articles}
                   </div>
                 </div>
               )}
@@ -494,49 +559,49 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-extrabold text-amber-300 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" />
-                      Schnellhilfe für Einsteiger: Artikel, Fälle & Wortstellung
+                      Beginner Quick Guide: Gender Articles, 4 Cases &amp; Word Order
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowQuickGrammarTips(false)}
                       className="text-[11px] text-slate-400 hover:text-white"
                     >
-                      Schließen ✕
+                      Close ✕
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-[11px]">
                     <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                      <div className="font-bold text-sky-300">1. Artikel-Endungen (der/die/das)</div>
-                      <p className="text-slate-300"><strong className="text-sky-400">der:</strong> -er, -en, -ig, -ling, Tage/Monate</p>
+                      <div className="font-bold text-sky-300">1. Gender Endings (der/die/das)</div>
+                      <p className="text-slate-300"><strong className="text-sky-400">der:</strong> -er, -en, -ig, -ling, days/months</p>
                       <p className="text-slate-300"><strong className="text-rose-400">die:</strong> -ung, -heit, -keit, -schaft, -ion, -e</p>
-                      <p className="text-slate-300"><strong className="text-amber-400">das:</strong> -chen, -lein, -um, -ment, Infinitive</p>
+                      <p className="text-slate-300"><strong className="text-amber-400">das:</strong> -chen, -lein, -um, -ment, infinitives</p>
                     </div>
                     <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                      <div className="font-bold text-indigo-300">2. Die 4 Fälle (Kasus-Kompass)</div>
-                      <p className="text-slate-300"><strong>Nom (Wer?):</strong> der / die / das</p>
-                      <p className="text-slate-300"><strong>Akk (Wen?):</strong> <span className="text-amber-300 font-bold">den</span> / die / das</p>
-                      <p className="text-slate-300"><strong>Dat (Wem?):</strong> <span className="text-amber-300 font-bold">dem / der / dem</span></p>
-                      <p className="text-slate-300"><strong>Gen (Wessen?):</strong> des / der / des</p>
+                      <div className="font-bold text-indigo-300">2. The 4 Cases (Kasus Compass)</div>
+                      <p className="text-slate-300"><strong>Nom (Who?):</strong> der / die / das</p>
+                      <p className="text-slate-300"><strong>Acc (Whom?):</strong> <span className="text-amber-300 font-bold">den</span> / die / das</p>
+                      <p className="text-slate-300"><strong>Dat (To whom?):</strong> <span className="text-amber-300 font-bold">dem / der / dem</span></p>
+                      <p className="text-slate-300"><strong>Gen (Whose?):</strong> des / der / des</p>
                     </div>
                     <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                      <div className="font-bold text-emerald-300">3. Satzbau (V2 & Nebensatz)</div>
-                      <p className="text-slate-300"><strong>Hauptsatz (V2):</strong> Verb steht immer an <strong>Position 2</strong> (<em>Heute <u>gehe</u> ich...</em>).</p>
-                      <p className="text-slate-300"><strong>Nebensatz:</strong> Nach <em>weil, dass, wenn</em> steht das Verb am <strong>Ende</strong>.</p>
+                      <div className="font-bold text-emerald-300">3. Word Order (V2 &amp; Subordinate)</div>
+                      <p className="text-slate-300"><strong>Main Clause (V2):</strong> Conjugated verb is always in <strong>Position 2</strong> (<em>Heute <u>gehe</u> ich...</em>).</p>
+                      <p className="text-slate-300"><strong>Subordinate Clause:</strong> After <em>weil, dass, wenn</em>, verb moves to the <strong>end</strong>.</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-900 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="pt-2 border-t border-slate-900 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {currentLesson.grammarFocus.examples.map((ex, i) => {
                   const isExPlaying = currentlyPlayingWord === `ex-${i}`;
                   return (
                     <div
                       key={i}
-                      className={`p-2.5 rounded-xl border text-xs space-y-1 transition-all ${
+                      className={`p-3 rounded-xl border text-xs space-y-1.5 transition-all ${
                         isExPlaying
                           ? 'bg-amber-950/40 border-amber-500/70 ring-1 ring-amber-500/40'
-                          : 'bg-slate-900/80 border-slate-800'
+                          : 'bg-slate-900/90 border-slate-800'
                       }`}
                     >
                       <div className="flex items-center justify-between text-amber-200 font-semibold gap-2">
@@ -544,15 +609,15 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handlePlayAudio(ex.de, `ex-${i}`)}
-                          className={`px-2 py-1 rounded-lg flex items-center gap-1 transition-all shrink-0 ${
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all duration-200 shrink-0 ${
                             isExPlaying
-                              ? 'bg-amber-500 text-slate-950 font-bold animate-pulse shadow-sm'
-                              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                              ? 'bg-amber-500 text-slate-950 font-black animate-pulse shadow-sm'
+                              : 'bg-slate-800 text-slate-200 hover:text-slate-950 hover:bg-amber-400'
                           }`}
-                          title="Anhören"
+                          title="Listen to grammar example"
                         >
                           <Volume2 className={`w-3.5 h-3.5 ${isExPlaying ? 'animate-bounce' : ''}`} />
-                          {isExPlaying && <span className="text-[10px]">Spielt...</span>}
+                          <span>{isExPlaying ? 'Playing...' : 'Listen'}</span>
                         </button>
                       </div>
                       <div className="text-slate-400 text-[11px]">{ex.en}</div>
@@ -567,7 +632,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
               {currentLesson.culturalNote && (
                 <div className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-900/30 text-xs space-y-1">
                   <div className="font-bold text-amber-300 flex items-center gap-1.5">
-                    <span>🏰</span> Landeskunde & Kultur
+                    <span>🏰</span> Cultural Note
                   </div>
                   <p className="text-slate-300 leading-relaxed">
                     {currentLesson.culturalNote}
@@ -578,11 +643,11 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
               {currentLesson.idiomSpotlight && (
                 <div className="p-3.5 rounded-2xl bg-rose-950/20 border border-rose-900/30 text-xs space-y-1">
                   <div className="font-bold text-rose-300 flex items-center gap-1.5">
-                    <span>💡</span> Deutsche Redewendung
+                    <span>💡</span> German Idiom Spotlight
                   </div>
                   <div className="font-semibold text-white">„{currentLesson.idiomSpotlight.german}“</div>
                   <p className="text-slate-300">
-                    <span className="text-slate-400">Bedeutung:</span> {currentLesson.idiomSpotlight.meaning}
+                    <span className="text-slate-400">Meaning:</span> {currentLesson.idiomSpotlight.meaning}
                   </p>
                 </div>
               )}
@@ -591,12 +656,13 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
 
           {/* Vocabulary Bank */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center justify-between flex-wrap gap-2 bg-slate-900/90 border border-slate-800 px-5 py-3.5 rounded-2xl shadow-md">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>📖</span> Kernvokabular ({currentLesson.vocabulary.length} Einträge)
+                <span>📖</span> Key Vocabulary &amp; Audio ({currentLesson.vocabulary.length} Expressions)
               </h3>
-              <span className="text-xs text-slate-400">
-                Klicke auf <Volume2 className="inline w-3 h-3 text-amber-400" /> für Audio • Hover über Artikel für Tipps
+              <span className="text-xs text-amber-300 font-medium flex items-center gap-1.5">
+                <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                Click &ldquo;Listen&rdquo; on any card to hear native pronunciation
               </span>
             </div>
 
@@ -607,10 +673,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                 return (
                   <div
                     key={vocab.id}
-                    className={`p-4 rounded-2xl bg-slate-900/80 border transition-all flex flex-col justify-between group space-y-3 ${
+                    className={`p-4 rounded-2xl bg-slate-900/90 border transition-all duration-200 flex flex-col justify-between group space-y-3 shadow-lg ${
                       isPlaying || isSentencePlaying
-                        ? 'border-amber-500/70 ring-1 ring-amber-500/30 shadow-lg shadow-amber-500/10'
-                        : 'border-slate-800 hover:border-slate-700'
+                        ? 'border-amber-500/70 ring-1 ring-amber-500/30 shadow-amber-500/10'
+                        : 'border-slate-800 hover:border-amber-500/40'
                     }`}
                   >
                     <div>
@@ -635,48 +701,48 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                           )}
                         </div>
 
-                        {/* Speaker Button with Active Playback Feedback */}
+                        {/* Speaker Button with Clear Label & Active Feedback */}
                         <button
                           type="button"
                           onClick={() => handlePlayAudio(vocab.german, vocab.id)}
-                          className={`px-2.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 shrink-0 ${
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shrink-0 ${
                             isPlaying
-                              ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-md shadow-amber-500/30 font-bold animate-pulse ring-2 ring-amber-400/50'
-                              : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-amber-600/20 border-slate-700/60'
+                              ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-md shadow-amber-500/30 font-black animate-pulse ring-2 ring-amber-400/50'
+                              : 'bg-slate-800 text-slate-200 hover:text-slate-950 hover:bg-amber-400 border-slate-700 hover:border-amber-400 hover:shadow-md'
                           }`}
-                          title="Deutsche Aussprache anhören"
+                          title="Listen to German pronunciation"
                         >
-                          <Volume2 className={`w-4 h-4 ${isPlaying ? 'animate-bounce' : ''}`} />
-                          {isPlaying && <span className="text-[10px] font-black">Spielt...</span>}
+                          <Volume2 className={`w-3.5 h-3.5 ${isPlaying ? 'animate-bounce' : ''}`} />
+                          <span>{isPlaying ? 'Playing...' : 'Listen'}</span>
                         </button>
                       </div>
 
-                      <div className="mt-2 text-xs font-medium text-slate-300">
+                      <div className="mt-2 text-xs font-semibold text-emerald-300">
                         {vocab.english}
                       </div>
 
                       {/* Example sentence */}
                       <div
-                        className={`mt-3 p-2.5 rounded-xl border text-xs space-y-1 transition-all ${
+                        className={`mt-3 p-2.5 rounded-xl border text-xs space-y-1.5 transition-all ${
                           isSentencePlaying
                             ? 'bg-amber-950/40 border-amber-500/60'
-                            : 'bg-slate-950/60 border-slate-800/70'
+                            : 'bg-slate-950/70 border-slate-800/80'
                         }`}
                       >
                         <div className="text-amber-200 flex items-center justify-between gap-2">
-                          <span>{vocab.exampleGerman}</span>
+                          <span className="leading-snug">{vocab.exampleGerman}</span>
                           <button
                             type="button"
                             onClick={() => handlePlayAudio(vocab.exampleGerman, `ex-${vocab.id}`)}
-                            className={`px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink-0 transition-all ${
+                            className={`px-2 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 shrink-0 transition-all duration-200 ${
                               isSentencePlaying
                                 ? 'bg-amber-500 text-slate-950 font-bold animate-pulse'
-                                : 'text-slate-400 hover:text-white'
+                                : 'bg-slate-800/90 text-slate-300 hover:bg-amber-400 hover:text-slate-950'
                             }`}
-                            title="Beispielsatz anhören"
+                            title="Listen to example sentence"
                           >
-                            <Volume2 className={`w-3.5 h-3.5 ${isSentencePlaying ? 'animate-bounce' : ''}`} />
-                            {isSentencePlaying && <span className="text-[10px]">Spielt...</span>}
+                            <Volume2 className={`w-3 h-3 ${isSentencePlaying ? 'animate-bounce' : ''}`} />
+                            <span>{isSentencePlaying ? 'Playing...' : 'Play Example'}</span>
                           </button>
                         </div>
                         <div className="text-slate-400 text-[11px]">
@@ -686,22 +752,22 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                     </div>
 
                     {/* Bottom Action: Practice in Voice Studio */}
-                    <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
+                    <div className="pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2">
                       {vocab.pronunciationTip ? (
-                        <span className="text-[10px] text-amber-300/80 line-clamp-1 flex items-center gap-1" title={vocab.pronunciationTip}>
+                        <span className="text-[11px] text-amber-300/90 line-clamp-1 flex items-center gap-1" title={vocab.pronunciationTip}>
                           <span>💡</span> {vocab.pronunciationTip}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-slate-500">{vocab.category}</span>
+                        <span className="text-[11px] text-slate-400">{vocab.category}</span>
                       )}
 
                       <button
                         type="button"
                         onClick={() => onStartVoicePractice(vocab)}
-                        className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1 shrink-0 ml-2"
+                        className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 hover:border-rose-500 text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all duration-200"
                       >
                         <Mic className="w-3.5 h-3.5" />
-                        <span>Sprechen</span>
+                        <span>Practice Speaking</span>
                       </button>
                     </div>
                   </div>
@@ -716,8 +782,8 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300">
-                      Praxis-Dialog
+                    <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300">
+                      Real-Life Conversation
                     </span>
                     <span className="text-xs text-slate-400">{currentLesson.dialogue.scenario}</span>
                   </div>
@@ -730,21 +796,21 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                 <button
                   type="button"
                   onClick={handlePlayDialogue}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transform hover:-translate-y-0.5 transition-all duration-200 ${
                     isPlayingDialogue
                       ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 animate-pulse'
-                      : 'bg-amber-600 hover:bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-600/30'
+                      : 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/25'
                   }`}
                 >
                   {isPlayingDialogue ? (
                     <>
                       <Square className="w-4 h-4 fill-current" />
-                      <span>Dialog läuft... (Stopp)</span>
+                      <span>Stop Dialogue</span>
                     </>
                   ) : (
                     <>
                       <Play className="w-4 h-4 fill-current" />
-                      <span>Gesamten Dialog Anhören</span>
+                      <span>Play Full Dialogue</span>
                     </>
                   )}
                 </button>
@@ -767,7 +833,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                           : 'bg-slate-900/80 border-slate-800/80 ml-4 sm:ml-8'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
                           <span className={`text-xs font-bold ${isFirstSpeaker ? 'text-amber-400' : 'text-emerald-400'}`}>
                             {line.speaker}
@@ -783,15 +849,15 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handlePlayAudio(line.german, `dlg-${idx}`)}
-                          className={`px-2.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shrink-0 ${
                             isActive
-                              ? 'bg-amber-500 text-slate-950 font-bold animate-pulse shadow-sm'
-                              : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-amber-600 hover:text-slate-950'
+                              ? 'bg-amber-500 text-slate-950 font-black animate-pulse shadow-sm'
+                              : 'bg-slate-800 text-slate-200 hover:text-slate-950 hover:bg-amber-400'
                           }`}
-                          title="Diese Replik anhören"
+                          title="Listen to this line"
                         >
-                          <Volume2 className={`w-4 h-4 ${isActive ? 'animate-bounce' : ''}`} />
-                          {isActive && <span className="text-[10px]">Spielt...</span>}
+                          <Volume2 className={`w-3.5 h-3.5 ${isActive ? 'animate-bounce' : ''}`} />
+                          <span>{isActive ? 'Playing...' : 'Listen'}</span>
                         </button>
                       </div>
                     </div>
