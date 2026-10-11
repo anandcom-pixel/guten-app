@@ -14,13 +14,18 @@ import {
   Square,
   ChevronDown,
   ChevronUp,
-  HelpCircle
+  HelpCircle,
+  RefreshCw
 } from 'lucide-react';
 import type { Lesson, CEFRLevel, VocabularyItem } from '../types';
 import { CURRICULUM_DATA, CEFR_METADATA } from '../data/curriculumData';
 import { speechService } from '../services/speechService';
 import { soundEffects } from '../services/soundEffects';
 import { srsService } from '../services/srsService';
+
+const DAILY_GERMAN_WORDS: VocabularyItem[] = CURRICULUM_DATA.flatMap(l => l.vocabulary).filter(
+  v => v.gender === 'der' || v.gender === 'die' || v.gender === 'das'
+);
 
 const CASE_EXPLANATIONS: Record<string, { question: string; role: string; articles: string }> = {
   Nominativ: {
@@ -68,6 +73,12 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
   );
   const [showQuickGrammarTips, setShowQuickGrammarTips] = useState<boolean>(false);
   const [showCaseTooltip, setShowCaseTooltip] = useState<boolean>(false);
+  const [dailyWordIndex, setDailyWordIndex] = useState<number>(() => {
+    const daySeed = Math.floor(Date.now() / 86400000);
+    return DAILY_GERMAN_WORDS.length > 0 ? daySeed % DAILY_GERMAN_WORDS.length : 0;
+  });
+
+  const dailyWord = DAILY_GERMAN_WORDS[dailyWordIndex] || CURRICULUM_DATA[0].vocabulary[1];
 
   useEffect(() => {
     const unsub = srsService.subscribe(() => {
@@ -245,6 +256,78 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Daily German Word Flashcard Widget */}
+      {dailyWord && (
+        <div className="rounded-3xl bg-slate-900 border border-slate-700/80 p-5 sm:p-6 shadow-xl transition-all">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+            {/* Left: Daily Word Header, German Term, Gender Tag & Meaning */}
+            <div className="space-y-2.5 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  Daily German Word • Wort des Tages
+                </span>
+                {renderGenderBadge(dailyWord.gender)}
+                {dailyWord.plural && (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-700/80">
+                    Plural: {dailyWord.plural}
+                  </span>
+                )}
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700/80">
+                  Level {dailyWord.level} • {dailyWord.category}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 pt-0.5">
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  {dailyWord.german}
+                </h2>
+                <span className="text-base sm:text-lg font-bold text-emerald-300">
+                  — {dailyWord.english}
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-sm text-slate-300 bg-slate-950/90 border border-slate-800 rounded-xl px-3.5 py-2.5">
+                <span className="font-semibold text-white">Beispiel: </span>
+                <span>„{dailyWord.exampleGerman}“</span>
+                <span className="text-slate-400 italic ml-2">({dailyWord.exampleEnglish})</span>
+              </p>
+            </div>
+
+            {/* Right: Audio Pronunciation & Next Word Actions */}
+            <div className="flex sm:flex-row items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => handlePlayAudio(dailyWord.german, `daily-${dailyWord.id}`)}
+                className={`px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-200 border ${
+                  currentlyPlayingWord === `daily-${dailyWord.id}`
+                    ? 'bg-emerald-600 text-white border-emerald-400 shadow-lg shadow-emerald-600/30 animate-pulse'
+                    : 'bg-slate-950 hover:bg-slate-800 text-amber-300 border-slate-700/80 hover:border-amber-400/50 shadow-md'
+                }`}
+              >
+                <Volume2 className={`w-4 h-4 ${currentlyPlayingWord === `daily-${dailyWord.id}` ? 'animate-bounce' : ''}`} />
+                <span>
+                  {currentlyPlayingWord === `daily-${dailyWord.id}` ? 'Playing Audio...' : 'Listen to Pronunciation'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundEffects.playTap();
+                  setDailyWordIndex(prev => (prev + 1) % DAILY_GERMAN_WORDS.length);
+                }}
+                title="Show another high-frequency German word"
+                className="px-3.5 py-3 rounded-2xl bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all duration-200"
+              >
+                <RefreshCw className="w-4 h-4 text-slate-400" />
+                <span>Next Word</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CEFR Modular Level Selector Tabs */}
       <div className="space-y-3">
