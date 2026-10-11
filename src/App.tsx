@@ -1,20 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Navbar, type NavigationTab } from './components/Navbar';
 import { CurriculumView } from './components/CurriculumView';
-import { VocabTestView } from './components/VocabTestView';
-import { SpeedDrillView } from './components/SpeedDrillView';
-import { SentenceBuilderView } from './components/SentenceBuilderView';
-import { VoiceStudioView } from './components/VoiceStudioView';
-import { MistakeVaultView } from './components/MistakeVaultView';
-import { SRSReviewView } from './components/SRSReviewView';
-import { ProfileProgressView } from './components/ProfileProgressView';
 import type { Lesson, VocabularyItem, UserStats } from './types';
 import { srsService } from './services/srsService';
 import { CURRICULUM_DATA } from './data/curriculumData';
 
+const VocabTestView = lazy(() =>
+  import('./components/VocabTestView').then(m => ({ default: m.VocabTestView }))
+);
+const SpeedDrillView = lazy(() =>
+  import('./components/SpeedDrillView').then(m => ({ default: m.SpeedDrillView }))
+);
+const SentenceBuilderView = lazy(() =>
+  import('./components/SentenceBuilderView').then(m => ({ default: m.SentenceBuilderView }))
+);
+const VoiceStudioView = lazy(() =>
+  import('./components/VoiceStudioView').then(m => ({ default: m.VoiceStudioView }))
+);
+const MistakeVaultView = lazy(() =>
+  import('./components/MistakeVaultView').then(m => ({ default: m.MistakeVaultView }))
+);
+const SRSReviewView = lazy(() =>
+  import('./components/SRSReviewView').then(m => ({ default: m.SRSReviewView }))
+);
+const ProfileProgressView = lazy(() =>
+  import('./components/ProfileProgressView').then(m => ({ default: m.ProfileProgressView }))
+);
+
+function ViewLoadingFallback() {
+  return (
+    <div className="rounded-3xl bg-slate-900 border border-slate-700/80 p-8 sm:p-12 shadow-xl text-center space-y-4 animate-pulse">
+      <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 mx-auto" />
+      <div className="h-5 w-48 bg-slate-800 rounded-lg mx-auto" />
+      <div className="h-3 w-72 max-w-full bg-slate-800/70 rounded-lg mx-auto" />
+    </div>
+  );
+}
+
 export function App() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('curriculum');
-  const [stats, setStats] = useState<UserStats>(srsService.getStats());
+  const [stats, setStats] = useState<UserStats>(() => srsService.getStats());
   const [speechRate, setSpeechRate] = useState<number>(1.0);
   const [testLesson, setTestLesson] = useState<Lesson | null>(null);
   const [voiceVocab, setVoiceVocab] = useState<VocabularyItem | null>(null);
@@ -26,29 +51,34 @@ export function App() {
     return () => unsub();
   }, []);
 
-  const handleStartTest = (lesson: Lesson) => {
+  const handleSelectTab = useCallback((tab: NavigationTab) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleStartTest = useCallback((lesson: Lesson) => {
     setTestLesson(lesson);
     setActiveTab('tests');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleStartVoicePractice = (vocab: VocabularyItem) => {
+  const handleStartVoicePractice = useCallback((vocab: VocabularyItem) => {
     setVoiceVocab(vocab);
     setActiveTab('voice');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleNavigateToSRS = () => {
+  const handleNavigateToSRS = useCallback(() => {
     setActiveTab('srs');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleNavigateToVault = () => {
+  const handleNavigateToVault = useCallback(() => {
     setActiveTab('vault');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleVoiceFromVault = (germanText: string) => {
+  const handleVoiceFromVault = useCallback((germanText: string) => {
     const allVocabs = CURRICULUM_DATA.flatMap(l => l.vocabulary);
     const found = allVocabs.find(v => v.german.toLowerCase() === germanText.toLowerCase() || v.baseWord.toLowerCase() === germanText.toLowerCase());
     if (found) {
@@ -68,17 +98,14 @@ export function App() {
     }
     setActiveTab('voice');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#063826] via-[#042419] to-[#021710] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
-        onSelectTab={(tab) => {
-          setActiveTab(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onSelectTab={handleSelectTab}
         stats={stats}
         speechRate={speechRate}
         onSetSpeechRate={setSpeechRate}
@@ -94,52 +121,56 @@ export function App() {
           />
         )}
 
-        {activeTab === 'tests' && (
-          <VocabTestView
-            initialLesson={testLesson}
-            speechRate={speechRate}
-            onNavigateToSRS={handleNavigateToSRS}
-          />
-        )}
+        {activeTab !== 'curriculum' && (
+          <Suspense fallback={<ViewLoadingFallback />}>
+            {activeTab === 'tests' && (
+              <VocabTestView
+                initialLesson={testLesson}
+                speechRate={speechRate}
+                onNavigateToSRS={handleNavigateToSRS}
+              />
+            )}
 
-        {activeTab === 'speed' && (
-          <SpeedDrillView
-            speechRate={speechRate}
-            onNavigateToVault={handleNavigateToVault}
-          />
-        )}
+            {activeTab === 'speed' && (
+              <SpeedDrillView
+                speechRate={speechRate}
+                onNavigateToVault={handleNavigateToVault}
+              />
+            )}
 
-        {activeTab === 'builder' && (
-          <SentenceBuilderView
-            speechRate={speechRate}
-            onNavigateToVault={handleNavigateToVault}
-          />
-        )}
+            {activeTab === 'builder' && (
+              <SentenceBuilderView
+                speechRate={speechRate}
+                onNavigateToVault={handleNavigateToVault}
+              />
+            )}
 
-        {activeTab === 'voice' && (
-          <VoiceStudioView
-            initialVocab={voiceVocab}
-            speechRate={speechRate}
-          />
-        )}
+            {activeTab === 'voice' && (
+              <VoiceStudioView
+                initialVocab={voiceVocab}
+                speechRate={speechRate}
+              />
+            )}
 
-        {activeTab === 'vault' && (
-          <MistakeVaultView
-            speechRate={speechRate}
-            onNavigateToVoice={handleVoiceFromVault}
-          />
-        )}
+            {activeTab === 'vault' && (
+              <MistakeVaultView
+                speechRate={speechRate}
+                onNavigateToVoice={handleVoiceFromVault}
+              />
+            )}
 
-        {activeTab === 'srs' && (
-          <SRSReviewView
-            speechRate={speechRate}
-          />
-        )}
+            {activeTab === 'srs' && (
+              <SRSReviewView
+                speechRate={speechRate}
+              />
+            )}
 
-        {activeTab === 'profile' && (
-          <ProfileProgressView
-            stats={stats}
-          />
+            {activeTab === 'profile' && (
+              <ProfileProgressView
+                stats={stats}
+              />
+            )}
+          </Suspense>
         )}
       </main>
 
