@@ -11,9 +11,16 @@ import {
   Zap,
   Gauge,
   Puzzle,
-  ShieldAlert
+  ShieldAlert,
+  LogIn,
+  LogOut,
+  ClipboardList,
+  ShieldCheck,
+  UserCheck,
+  PlusCircle
 } from 'lucide-react';
 import type { UserStats } from '../types';
+import type { AuthUser } from '../types/auth';
 import { speechService, type GermanVoiceOption } from '../services/speechService';
 import { soundEffects } from '../services/soundEffects';
 
@@ -25,6 +32,11 @@ interface NavbarProps {
   stats: UserStats;
   speechRate: number;
   onSetSpeechRate: (rate: number) => void;
+  currentUser: AuthUser | null;
+  onOpenLogin: () => void;
+  onOpenReport: () => void;
+  onLogout: () => void;
+  onOpenAddContent?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,7 +44,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectTab,
   stats,
   speechRate,
-  onSetSpeechRate
+  onSetSpeechRate,
+  currentUser,
+  onOpenLogin,
+  onOpenReport,
+  onLogout,
+  onOpenAddContent
 }) => {
   const [germanVoices, setGermanVoices] = useState<GermanVoiceOption[]>([]);
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('');
@@ -81,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   ] as const;
 
   return (
-    <header className="sticky top-0 z-40 bg-[#042419]/90 backdrop-blur-md border-b border-emerald-900/50 transition-all">
+    <header className="sticky top-0 z-40 bg-[#fdef81]/95 backdrop-blur-md border-b border-amber-300 shadow-sm transition-all text-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
           {/* Logo */}
@@ -98,32 +115,32 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-lg font-black tracking-tight text-white group-hover:text-amber-300 transition-colors">
+                <span className="text-lg font-black tracking-tight text-slate-900 group-hover:text-amber-800 transition-colors">
                   Guten App
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-amber-200/90 text-amber-950 border border-amber-300 flex items-center gap-1">
                   <span>🇩🇪</span> DEUTSCH
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">Deutsche Akademie & Sprachtraining</p>
+              <p className="text-[11px] text-slate-700 hidden sm:block">Deutsche Akademie &amp; Sprachtraining</p>
             </div>
           </div>
 
           {/* Quick Stats Pill */}
-          <div className="hidden md:flex items-center gap-3 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-2xl shadow-inner">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400" title="Daily Streak">
+          <div className="hidden md:flex items-center gap-3 bg-white/90 border border-amber-300/80 px-3 py-1.5 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-800" title="Daily Streak">
               <Flame className="w-4 h-4 fill-amber-500 text-amber-500 animate-pulse" />
               <span>{stats.streak} {stats.streak === 1 ? 'Tag' : 'Tage'}</span>
             </div>
-            <div className="w-px h-3.5 bg-slate-800" />
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-300" title="XP Points">
-              <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
+            <div className="w-px h-3.5 bg-amber-200" />
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900" title="XP Points">
+              <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
               <span>{stats.xp} XP</span>
             </div>
-            <div className="w-px h-3.5 bg-slate-800" />
+            <div className="w-px h-3.5 bg-amber-200" />
             <div
               onClick={() => onSelectTab('profile')}
-              className="text-[11px] font-medium text-slate-300 hover:text-white cursor-pointer px-2 py-0.5 rounded-md hover:bg-slate-800 transition-colors"
+              className="text-[11px] font-medium text-slate-700 hover:text-slate-950 cursor-pointer px-2 py-0.5 rounded-md hover:bg-amber-100 transition-colors"
             >
               {stats.levelRank.split(' ')[0]}
             </div>
@@ -133,14 +150,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-2">
             {/* Active TTS Playback Indicator */}
             {isSpeaking && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-300 text-xs font-bold animate-pulse shadow-sm shadow-amber-500/20">
-                <Volume2 className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-                <span className="hidden sm:inline">Playing Audio...</span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 border border-amber-500 text-xs font-bold animate-pulse shadow-sm">
+                <Volume2 className="w-3.5 h-3.5 text-slate-950 animate-bounce" />
+                <span className="hidden sm:inline">Audio aktiv...</span>
               </div>
             )}
 
             {/* Speed Selector */}
-            <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 text-xs font-semibold">
+            <div className="flex items-center bg-white/95 border border-amber-300 rounded-xl p-1 text-xs font-semibold shadow-sm">
               <button
                 type="button"
                 onClick={() => {
@@ -148,10 +165,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onSetSpeechRate(nextRate);
                   soundEffects.playTap();
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all duration-200"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-amber-100 text-slate-800 hover:text-slate-950 transition-all duration-200"
                 title="Change audio playback speed"
               >
-                <Gauge className="w-3.5 h-3.5 text-amber-400" />
+                <Gauge className="w-3.5 h-3.5 text-indigo-700" />
                 <span>Speed: {speechRate}x</span>
               </button>
             </div>
@@ -160,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => setShowVoiceModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 transition-all duration-200"
+              className="px-3 py-1.5 rounded-xl bg-white/95 hover:bg-amber-100 border border-amber-300 text-xs font-semibold text-slate-800 hover:text-slate-950 flex items-center gap-1.5 transition-all duration-200 shadow-sm"
               title="Select German Native TTS Voice"
             >
               <span className="text-sm">🗣️</span>
@@ -173,21 +190,88 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={handleToggleSound}
-              className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 shadow-sm ${
                 soundEnabled
-                  ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
-                  : 'bg-red-500/10 border-red-500/30 text-red-400'
+                  ? 'bg-white/95 border-amber-300 text-slate-800 hover:text-slate-950 hover:bg-amber-100'
+                  : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
               }`}
               title={soundEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
             >
-              {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4" />}
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-indigo-700" /> : <VolumeX className="w-4 h-4" />}
               <span className="hidden sm:inline">{soundEnabled ? 'SFX On' : 'Muted'}</span>
             </button>
+
+            {/* Auth Controls & Status */}
+            <div className="h-5 w-px bg-amber-300 hidden sm:block" />
+
+            {currentUser ? (
+              <div className="flex items-center gap-1.5">
+                {/* User Status Badge */}
+                <div
+                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 border shadow-sm ${
+                    currentUser.role === 'admin'
+                      ? 'bg-slate-950 text-amber-300 border-amber-400/60'
+                      : 'bg-slate-950 text-emerald-300 border-emerald-400/60'
+                  }`}
+                  title={`Angemeldet als ${currentUser.displayName} (Universal Add & Edit)`}
+                >
+                  {currentUser.role === 'admin' ? (
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  ) : (
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  )}
+                  <span className="hidden sm:inline max-w-[90px] truncate">{currentUser.displayName}</span>
+                </div>
+
+                {/* Universal Add Content Button for All Authorized Users */}
+                <button
+                  type="button"
+                  onClick={onOpenAddContent}
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md border border-amber-500 transition-all transform hover:-translate-y-0.5 active:scale-95"
+                  title="Neuen Inhalt hinzufügen (Lektion, Wortschatz, Quiz)"
+                >
+                  <PlusCircle className="w-3.5 h-3.5 text-slate-950" />
+                  <span className="hidden sm:inline">+ Neuer Inhalt</span>
+                  <span className="sm:hidden">+ Inhalt</span>
+                </button>
+
+                {/* Evaluation Report Trigger Button */}
+                <button
+                  type="button"
+                  onClick={onOpenReport}
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-900 border border-slate-700 hover:border-amber-400/70 text-xs font-bold text-amber-300 flex items-center gap-1.5 transition-all duration-200 shadow-sm transform hover:-translate-y-0.5"
+                  title="Evaluationsbericht an anand.com@gmail.com senden"
+                >
+                  <ClipboardList className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden md:inline">Bericht</span>
+                </button>
+
+                {/* Logout Button */}
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="p-1.5 rounded-xl bg-white/90 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-amber-300 hover:border-rose-300 transition-all text-xs"
+                  title="Abmelden"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenLogin}
+                className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-900 border border-slate-700 hover:border-amber-400 text-xs font-bold text-amber-300 flex items-center gap-1.5 transition-all duration-200 shadow-sm transform hover:-translate-y-0.5 active:scale-95"
+                title="Anmelden (Admin, Sreegovind oder Gayathri)"
+              >
+                <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                <span>Anmelden</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Tab Navigation Bar — Responsive Multi-Row Grid / Flex Wrap (No Horizontal Scroll) */}
-        <nav className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:flex-wrap lg:items-center gap-1.5 sm:gap-2 py-2.5 border-t border-emerald-900/50">
+        {/* Tab Navigation Bar — Responsive Multi-Row Grid / Flex Wrap */}
+        <nav className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:flex-wrap lg:items-center gap-1.5 sm:gap-2 py-2.5 border-t border-amber-300/70">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -201,11 +285,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className={`flex items-center justify-center sm:justify-start gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 select-none transform hover:-translate-y-0.5 ${
                   isActive
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm shadow-amber-500/10 font-bold'
-                    : 'bg-slate-900/50 text-slate-300 border border-slate-800/70 hover:text-white hover:bg-slate-900 hover:border-slate-700'
+                    ? 'bg-slate-950 text-amber-300 border border-slate-700/80 shadow-md font-bold'
+                    : 'bg-amber-100/70 text-slate-800 border border-amber-300/60 hover:text-slate-950 hover:bg-amber-200/90 hover:border-amber-400'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-300' : 'text-indigo-800'}`} />
                 <span className="truncate">{item.label}</span>
               </button>
             );
@@ -215,19 +299,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Voice Selection Modal */}
       {showVoiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-100">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <span>🇩🇪</span> Deutsche Aussprache-Stimme
                 </h3>
-                <p className="text-xs text-slate-400">Wähle eine native deutsche TTS-Stimme</p>
+                <p className="text-xs text-slate-300">Wählen Sie die native Sprachsynthese-Stimme</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowVoiceModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-300 hover:text-white p-1 rounded-lg"
               >
                 ✕
               </button>
@@ -235,8 +319,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
               {germanVoices.length === 0 ? (
-                <div className="p-4 bg-slate-950/60 rounded-xl text-xs text-slate-400 text-center">
-                  Standard-Browserstimme für Deutsch (de-DE) wird automatisch verwendet.
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 text-center">
+                  Standard-Browser-Stimme wird automatisch verwendet.
                 </div>
               ) : (
                 germanVoices.map(v => (
@@ -246,17 +330,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onClick={() => {
                       speechService.setSelectedVoice(v.name);
                       setSelectedVoiceName(v.name);
-                      speechService.speak('Guten Tag! Ich bin Ihre Aussprache-Assistentin für Deutsch.');
+                      speechService.speak('Guten Tag! Ich bin deine deutsche Aussprachehilfe.');
                     }}
                     className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between ${
                       selectedVoiceName === v.name
-                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-200'
-                        : 'bg-slate-950/50 border-slate-800/80 text-slate-300 hover:bg-slate-800'
+                        ? 'bg-slate-950 border-amber-500/60 text-amber-200'
+                        : 'bg-slate-950 border-slate-800 text-slate-200 hover:bg-slate-800'
                     }`}
                   >
                     <div>
                       <div className="font-semibold text-white">{v.name}</div>
-                      <div className="text-[11px] text-slate-500">{v.lang} {v.isPreferred ? '• Empfohlen' : ''}</div>
+                      <div className="text-[11px] text-slate-400">{v.lang} {v.isPreferred ? '• Empfohlen' : ''}</div>
                     </div>
                     {selectedVoiceName === v.name && (
                       <span className="text-amber-400 text-xs font-bold">Aktiv ✓</span>
@@ -270,7 +354,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => setShowVoiceModal(false)}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-amber-600/30"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black shadow-md shadow-amber-500/20"
               >
                 Fertig
               </button>

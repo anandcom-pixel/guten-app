@@ -15,13 +15,18 @@ import {
   ChevronDown,
   ChevronUp,
   HelpCircle,
-  RefreshCw
+  RefreshCw,
+  Edit3,
+  PlusCircle
 } from 'lucide-react';
 import type { Lesson, CEFRLevel, VocabularyItem } from '../types';
+import type { AuthUser } from '../types/auth';
 import { CURRICULUM_DATA, CEFR_METADATA } from '../data/curriculumData';
 import { speechService } from '../services/speechService';
 import { soundEffects } from '../services/soundEffects';
 import { srsService } from '../services/srsService';
+import { curriculumOverrideService } from '../services/curriculumOverrideService';
+import { EditContentModal } from './EditContentModal';
 
 const DAILY_GERMAN_WORDS: VocabularyItem[] = CURRICULUM_DATA.flatMap(l => l.vocabulary).filter(
   v => v.gender === 'der' || v.gender === 'die' || v.gender === 'das'
@@ -54,13 +59,20 @@ interface CurriculumViewProps {
   speechRate: number;
   onStartTest: (lesson: Lesson) => void;
   onStartVoicePractice: (vocab: VocabularyItem) => void;
+  currentUser?: AuthUser | null;
+  onOpenAddContent?: (level?: CEFRLevel, lessonId?: string) => void;
 }
 
 export const CurriculumView: React.FC<CurriculumViewProps> = ({
   speechRate,
   onStartTest,
-  onStartVoicePractice
+  onStartVoicePractice,
+  currentUser,
+  onOpenAddContent
 }) => {
+  const [allLessons, setAllLessons] = useState<Lesson[]>(() =>
+    curriculumOverrideService.applyOverrides(CURRICULUM_DATA)
+  );
   const [selectedLevel, setSelectedLevel] = useState<CEFRLevel>('A1');
   const [activeLessonId, setActiveLessonId] = useState<string>(
     CURRICULUM_DATA.find(l => l.level === 'A1')?.id || CURRICULUM_DATA[0].id
@@ -73,6 +85,10 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
   );
   const [showQuickGrammarTips, setShowQuickGrammarTips] = useState<boolean>(false);
   const [showCaseTooltip, setShowCaseTooltip] = useState<boolean>(false);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [editingVocab, setEditingVocab] = useState<VocabularyItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+
   const [dailyWordIndex, setDailyWordIndex] = useState<number>(() => {
     const daySeed = Math.floor(Date.now() / 86400000);
     return DAILY_GERMAN_WORDS.length > 0 ? daySeed % DAILY_GERMAN_WORDS.length : 0;
@@ -84,20 +100,26 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
     const unsub = srsService.subscribe(() => {
       setCompletedLessonIds(srsService.getCompletedLessonIds());
     });
-    return () => unsub();
+    const unsubOverrides = curriculumOverrideService.subscribe(() => {
+      setAllLessons(curriculumOverrideService.applyOverrides(CURRICULUM_DATA));
+    });
+    return () => {
+      unsub();
+      unsubOverrides();
+    };
   }, []);
 
   const levels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
-  const lessonsForLevel = CURRICULUM_DATA.filter(l => l.level === selectedLevel);
-  const currentLesson = CURRICULUM_DATA.find(l => l.id === activeLessonId) || lessonsForLevel[0];
+  const lessonsForLevel = allLessons.filter(l => l.level === selectedLevel);
+  const currentLesson = allLessons.find(l => l.id === activeLessonId) || lessonsForLevel[0] || allLessons[0];
 
   const completedInLevelCount = lessonsForLevel.filter(l => completedLessonIds.includes(l.id)).length;
   const levelProgressPct = lessonsForLevel.length > 0
     ? Math.round((completedInLevelCount / lessonsForLevel.length) * 100)
     : 0;
-  const totalCompletedCount = CURRICULUM_DATA.filter(l => completedLessonIds.includes(l.id)).length;
-  const totalLessonsCount = CURRICULUM_DATA.length;
+  const totalCompletedCount = allLessons.filter(l => completedLessonIds.includes(l.id)).length;
+  const totalLessonsCount = allLessons.length;
 
   const handleToggleComplete = (lessonId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -114,7 +136,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
     setSelectedLevel(lvl);
     setShowCaseTooltip(false);
     soundEffects.playTap();
-    const firstLesson = CURRICULUM_DATA.find(l => l.level === lvl);
+    const firstLesson = allLessons.find(l => l.level === lvl);
     if (firstLesson) {
       setActiveLessonId(firstLesson.id);
     }
@@ -343,7 +365,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
           {levels.map(lvl => {
             const isSelected = selectedLevel === lvl;
             const meta = CEFR_METADATA[lvl];
-            const lvlLessons = CURRICULUM_DATA.filter(l => l.level === lvl);
+            const lvlLessons = allLessons.filter(l => l.level === lvl);
             const lvlCompleted = lvlLessons.filter(l => completedLessonIds.includes(l.id)).length;
             const isLvlAllDone = lvlLessons.length > 0 && lvlCompleted === lvlLessons.length;
             const levelLabel =
@@ -408,9 +430,22 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
               <BookOpen className="w-4 h-4 text-amber-400" />
               {selectedLevel} Core Modules
             </h2>
-            <span className="text-xs font-bold text-emerald-400">
-              {completedInLevelCount} / {lessonsForLevel.length} Done ({levelProgressPct}%)
-            </span>
+            <div className="flex items-center gap-2">
+              {currentUser && (
+                <button
+                  type="button"
+                  onClick={() => onOpenAddContent?.(selectedLevel)}
+                  title="Neues Modul zu diesem Niveau hinzufügen"
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 text-xs font-bold flex items-center gap-1 transition-all"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>+ Modul</span>
+                </button>
+              )}
+              <span className="text-xs font-bold text-emerald-400">
+                {completedInLevelCount} / {lessonsForLevel.length} Done ({levelProgressPct}%)
+              </span>
+            </div>
           </div>
 
           {/* Visual Level Progress Bar */}
@@ -540,6 +575,33 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                {currentUser && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onOpenAddContent?.(selectedLevel, currentLesson.id)}
+                      title="Neuen Inhalt oder Vokabel zu dieser Lektion hinzufügen"
+                      className="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      <span>+ Neuer Inhalt</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEffects.playTap();
+                        setEditingLesson(currentLesson);
+                        setEditingVocab(null);
+                        setIsEditModalOpen(true);
+                      }}
+                      title="Diese Lektion bearbeiten"
+                      className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Bearbeiten</span>
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => handleToggleComplete(currentLesson.id)}
@@ -740,9 +802,22 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
           {/* Vocabulary Bank */}
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2 bg-slate-900/90 border border-slate-800 px-5 py-3.5 rounded-2xl shadow-md">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>📖</span> Key Vocabulary &amp; Audio ({currentLesson.vocabulary.length} Expressions)
-              </h3>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>📖</span> Key Vocabulary &amp; Audio ({currentLesson.vocabulary.length} Expressions)
+                </h3>
+                {currentUser && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenAddContent?.(selectedLevel, currentLesson.id)}
+                    title="Neues Wort zu dieser Lektion hinzufügen"
+                    className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5" />
+                    <span>+ Wort hinzufügen</span>
+                  </button>
+                )}
+              </div>
               <span className="text-xs text-amber-300 font-medium flex items-center gap-1.5">
                 <Volume2 className="w-3.5 h-3.5 text-amber-400" />
                 Click &ldquo;Listen&rdquo; on any card to hear native pronunciation
@@ -763,7 +838,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                     }`}
                   >
                     <div>
-                      {/* Top Row: Word & Listen Button */}
+                      {/* Top Row: Word & Actions */}
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -784,20 +859,37 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                           )}
                         </div>
 
-                        {/* Speaker Button with Clear Label & Active Feedback */}
-                        <button
-                          type="button"
-                          onClick={() => handlePlayAudio(vocab.german, vocab.id)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shrink-0 ${
-                            isPlaying
-                              ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-md shadow-amber-500/30 font-black animate-pulse ring-2 ring-amber-400/50'
-                              : 'bg-slate-800 text-slate-200 hover:text-slate-950 hover:bg-amber-400 border-slate-700 hover:border-amber-400 hover:shadow-md'
-                          }`}
-                          title="Listen to German pronunciation"
-                        >
-                          <Volume2 className={`w-3.5 h-3.5 ${isPlaying ? 'animate-bounce' : ''}`} />
-                          <span>{isPlaying ? 'Playing...' : 'Listen'}</span>
-                        </button>
+                        {/* Edit Button for Authorized Users & Speaker Button */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {currentUser && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                soundEffects.playTap();
+                                setEditingVocab(vocab);
+                                setEditingLesson(currentLesson);
+                                setIsEditModalOpen(true);
+                              }}
+                              title="Dieses Wort bearbeiten"
+                              className="p-1.5 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 border border-slate-700 hover:border-amber-400 text-xs transition-colors"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handlePlayAudio(vocab.german, vocab.id)}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shrink-0 ${
+                              isPlaying
+                                ? 'bg-amber-500 text-slate-950 border-amber-400 scale-105 shadow-md shadow-amber-500/30 font-black animate-pulse ring-2 ring-amber-400/50'
+                                : 'bg-slate-800 text-slate-200 hover:text-slate-950 hover:bg-amber-400 border-slate-700 hover:border-amber-400 hover:shadow-md'
+                            }`}
+                            title="Listen to German pronunciation"
+                          >
+                            <Volume2 className={`w-3.5 h-3.5 ${isPlaying ? 'animate-bounce' : ''}`} />
+                            <span>{isPlaying ? 'Playing...' : 'Listen'}</span>
+                          </button>
+                        </div>
                       </div>
 
                       <div className="mt-2 text-xs font-semibold text-emerald-300">
@@ -951,6 +1043,21 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Edit Content Modal for Authorized Users */}
+      <EditContentModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingLesson(null);
+          setEditingVocab(null);
+        }}
+        targetLesson={editingLesson || undefined}
+        targetVocab={editingVocab || undefined}
+        onSaved={() => {
+          setAllLessons(curriculumOverrideService.applyOverrides(CURRICULUM_DATA));
+        }}
+      />
     </div>
   );
 };

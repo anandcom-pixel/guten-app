@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Navbar, type NavigationTab } from './components/Navbar';
 import { CurriculumView } from './components/CurriculumView';
-import type { Lesson, VocabularyItem, UserStats } from './types';
+import type { Lesson, VocabularyItem, UserStats, CEFRLevel } from './types';
+import type { AuthUser } from './types/auth';
 import { srsService } from './services/srsService';
+import { authService } from './services/authService';
+import { curriculumOverrideService } from './services/curriculumOverrideService';
 import { CURRICULUM_DATA } from './data/curriculumData';
+import { LoginModal } from './components/LoginModal';
+import { EvaluationReportModal } from './components/EvaluationReportModal';
+import { AddContentModal } from './components/AddContentModal';
 
 const VocabTestView = lazy(() =>
   import('./components/VocabTestView').then(m => ({ default: m.VocabTestView }))
@@ -44,11 +50,34 @@ export function App() {
   const [testLesson, setTestLesson] = useState<Lesson | null>(null);
   const [voiceVocab, setVoiceVocab] = useState<VocabularyItem | null>(null);
 
+  // Authentication & Management States
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => authService.getCurrentUser());
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [showReportModal, setShowReportModal] = useState<boolean>(false);
+  const [showAddContentModal, setShowAddContentModal] = useState<boolean>(false);
+  const [addContentLevel, setAddContentLevel] = useState<CEFRLevel>('A1');
+  const [addContentLessonId, setAddContentLessonId] = useState<string | undefined>(undefined);
+
+  // Dynamic Curriculum with Overrides & Cloud Synchronization
+  const [allLessons, setAllLessons] = useState<Lesson[]>(() =>
+    curriculumOverrideService.applyOverrides(CURRICULUM_DATA)
+  );
+
   useEffect(() => {
-    const unsub = srsService.subscribe(() => {
+    const unsubSrs = srsService.subscribe(() => {
       setStats({ ...srsService.getStats() });
     });
-    return () => unsub();
+    const unsubAuth = authService.subscribe(user => {
+      setCurrentUser(user);
+    });
+    const unsubCurriculum = curriculumOverrideService.subscribe(() => {
+      setAllLessons(curriculumOverrideService.applyOverrides(CURRICULUM_DATA));
+    });
+    return () => {
+      unsubSrs();
+      unsubAuth();
+      unsubCurriculum();
+    };
   }, []);
 
   const handleSelectTab = useCallback((tab: NavigationTab) => {
@@ -78,8 +107,18 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
+  const handleOpenAddContent = useCallback((level?: CEFRLevel, lessonId?: string) => {
+    if (level) setAddContentLevel(level);
+    if (lessonId) setAddContentLessonId(lessonId);
+    setShowAddContentModal(true);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    authService.logout();
+  }, []);
+
   const handleVoiceFromVault = useCallback((germanText: string) => {
-    const allVocabs = CURRICULUM_DATA.flatMap(l => l.vocabulary);
+    const allVocabs = allLessons.flatMap(l => l.vocabulary);
     const found = allVocabs.find(v => v.german.toLowerCase() === germanText.toLowerCase() || v.baseWord.toLowerCase() === germanText.toLowerCase());
     if (found) {
       setVoiceVocab(found);
@@ -98,10 +137,10 @@ export function App() {
     }
     setActiveTab('voice');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [allLessons]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#063826] via-[#042419] to-[#021710] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#fdef81] text-slate-900 flex flex-col font-sans selection:bg-amber-400 selection:text-slate-950">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -109,6 +148,11 @@ export function App() {
         stats={stats}
         speechRate={speechRate}
         onSetSpeechRate={setSpeechRate}
+        currentUser={currentUser}
+        onOpenLogin={() => setShowLoginModal(true)}
+        onOpenReport={() => setShowReportModal(true)}
+        onLogout={handleLogout}
+        onOpenAddContent={() => handleOpenAddContent(activeTab === 'curriculum' ? addContentLevel : 'A1')}
       />
 
       {/* Main Content Area */}
@@ -118,6 +162,8 @@ export function App() {
             speechRate={speechRate}
             onStartTest={handleStartTest}
             onStartVoicePractice={handleStartVoicePractice}
+            currentUser={currentUser}
+            onOpenAddContent={handleOpenAddContent}
           />
         )}
 
@@ -175,30 +221,59 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-emerald-950/80 bg-[#021710]/95 py-8 px-4 text-center text-xs text-slate-400">
+      <footer className="border-t border-amber-300/80 bg-slate-950 text-slate-400 py-8 px-4 text-center text-xs mt-auto shadow-inner">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-300">Guten App: Deutsche Akademie</span>
-            <span>•</span>
+            <span className="font-bold text-slate-200">Guten App: Deutsche Akademie</span>
+            <span className="text-slate-600">•</span>
             <span className="text-slate-400">Autonome Plattform für deutsches Sprachtraining</span>
           </div>
 
           {/* Creator & Tester Credits */}
           <div className="flex items-center gap-2 text-slate-300">
-            <span>Created by <strong className="font-bold text-slate-200">ANAND MOHANDAS</strong></span>
-            <span className="text-slate-500">|</span>
+            <span>Created by <strong className="font-bold text-slate-200">Anandovsky</strong></span>
+            <span className="text-slate-600">|</span>
             <span>Tester: <strong className="font-bold text-slate-200">Gayathri</strong></span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-400">
             <span>CEFR A1 – C1</span>
-            <span>•</span>
-            <span>Web Speech API (TTS & STT de-DE)</span>
-            <span>•</span>
-            <span>Leitner SRS Deck & Fehler-Tresor</span>
+            <span className="text-slate-600">•</span>
+            <span>Web Speech API (TTS &amp; STT de-DE)</span>
+            <span className="text-slate-600">•</span>
+            <span>Leitner SRS Deck &amp; Fehler-Tresor</span>
           </div>
         </div>
       </footer>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={() => {
+          setShowLoginModal(false);
+        }}
+      />
+
+      {/* Evaluation & Bug Report Modal */}
+      <EvaluationReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        currentUser={currentUser}
+        activeTab={activeTab}
+      />
+
+      {/* Add New Content Modal for Authorized Users */}
+      <AddContentModal
+        isOpen={showAddContentModal}
+        onClose={() => setShowAddContentModal(false)}
+        availableLessons={allLessons}
+        defaultLessonId={addContentLessonId}
+        defaultLevel={addContentLevel}
+        onSuccess={() => {
+          setAllLessons(curriculumOverrideService.applyOverrides(CURRICULUM_DATA));
+        }}
+      />
     </div>
   );
 }
