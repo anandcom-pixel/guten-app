@@ -9,14 +9,15 @@ import {
   Cloud,
   Puzzle,
   Lightbulb,
-  MessageSquare
+  MessageSquare,
+  Quote
 } from 'lucide-react';
 import type { Lesson, VocabularyItem, CEFRLevel, GermanGender } from '../types';
 import { curriculumOverrideService } from '../services/curriculumOverrideService';
 import { speechService } from '../services/speechService';
 import { soundEffects } from '../services/soundEffects';
 
-type ContentCreationTab = 'vocab' | 'lesson' | 'quiz';
+type ContentCreationTab = 'vocab' | 'lesson' | 'quiz' | 'quote';
 
 interface AddContentModalProps {
   isOpen: boolean;
@@ -84,6 +85,12 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
   const [quizAnswerEn, setQuizAnswerEn] = useState<string>('');
   const [quizDistractors, setQuizDistractors] = useState<string>('');
   const [quizExplanation, setQuizExplanation] = useState<string>('');
+
+  // Tab 4: Daily German Quote State (Replaces designated slot)
+  const [quoteGerman, setQuoteGerman] = useState<string>('');
+  const [quoteEnglish, setQuoteEnglish] = useState<string>('');
+  const [quoteAuthor, setQuoteAuthor] = useState<string>('');
+  const [quoteCategory, setQuoteCategory] = useState<string>('Motivation & Weisheit');
 
   if (!isOpen) return null;
 
@@ -238,6 +245,28 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
     }, 700);
   };
 
+  const handleCreateQuote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quoteGerman.trim() || !quoteEnglish.trim()) return;
+
+    setIsSubmitting(true);
+    // Setting daily quote seamlessly replaces the existing daily slot
+    const newQuote = curriculumOverrideService.setDailyQuote(
+      quoteGerman.trim(),
+      quoteEnglish.trim(),
+      quoteAuthor.trim() || 'Deutsches Sprichwort',
+      quoteCategory.trim() || 'Motivation & Weisheit'
+    );
+    soundEffects.playCorrect();
+    setSuccessMessage(`Zitat des Tages erfolgreich ersetzt und in der Cloud gespeichert!`);
+    setIsSubmitting(false);
+
+    setTimeout(() => {
+      onSuccess?.('quote', newQuote.id);
+      onClose();
+    }, 700);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl max-h-[92vh] flex flex-col bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden text-slate-100">
@@ -321,6 +350,22 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
           >
             <Puzzle className="w-3.5 h-3.5" />
             <span>Satz &amp; Quiz</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundEffects.playTap();
+              setActiveTab('quote');
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'quote'
+                ? 'bg-emerald-600 text-white shadow-md font-black'
+                : 'bg-slate-950 text-slate-300 hover:bg-slate-800 border border-slate-800'
+            }`}
+          >
+            <Quote className="w-3.5 h-3.5" />
+            <span>Zitat des Tages</span>
           </button>
         </div>
 
@@ -858,6 +903,105 @@ export const AddContentModal: React.FC<AddContentModalProps> = ({
                 >
                   <Cloud className="w-4 h-4" />
                   <span>Übung speichern &amp; synchronisieren</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 4: DAILY GERMAN QUOTE REPLACEMENT SLOT */}
+          {activeTab === 'quote' && (
+            <form onSubmit={handleCreateQuote} className="space-y-4">
+              <div className="p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 flex items-start gap-3">
+                <Quote className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-200/90 leading-relaxed">
+                  Geben Sie ein deutsches Zitat ein. <strong className="text-emerald-300 font-bold">Wichtig:</strong> Das Hinzufügen eines neuen Zitats ersetzt den aktuellen <strong className="text-emerald-300 font-bold">Tageszitat-Slot</strong> nahtlos für alle Benutzer und synchronisiert sofort in die Vercel-Cloud.
+                </div>
+              </div>
+
+              {/* German Quote */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                  <span>Deutscher Satz / Zitat *</span>
+                  {quoteGerman.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => handlePreviewAudio(quoteGerman)}
+                      className="text-emerald-400 hover:text-emerald-300 text-[11px] font-bold flex items-center gap-1"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>Aussprache anhören</span>
+                    </button>
+                  )}
+                </label>
+                <textarea
+                  value={quoteGerman}
+                  onChange={(e) => setQuoteGerman(e.target.value)}
+                  placeholder="z. B. Aller Anfang ist schwer, aber wer wagt, gewinnt."
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 font-serif italic"
+                  required
+                />
+              </div>
+
+              {/* English Translation */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-300">
+                  Englische Bedeutung / Übersetzung *
+                </label>
+                <textarea
+                  value={quoteEnglish}
+                  onChange={(e) => setQuoteEnglish(e.target.value)}
+                  placeholder="z. B. Every beginning is difficult, but fortune favors the bold."
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500"
+                  required
+                />
+              </div>
+
+              {/* Author & Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-300">Autor / Quelle</label>
+                  <input
+                    type="text"
+                    value={quoteAuthor}
+                    onChange={(e) => setQuoteAuthor(e.target.value)}
+                    placeholder="z. B. Johann Wolfgang von Goethe, Deutsches Sprichwort..."
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-xs focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-300">Kategorie</label>
+                  <select
+                    value={quoteCategory}
+                    onChange={(e) => setQuoteCategory(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-white text-xs focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="Motivation & Weisheit">Motivation &amp; Weisheit</option>
+                    <option value="Klassiker & Philosophie">Klassiker &amp; Philosophie</option>
+                    <option value="Sprichwort & Volksmund">Sprichwort &amp; Volksmund</option>
+                    <option value="Literatur & Poesie">Literatur &amp; Poesie</option>
+                    <option value="Alltag & Kultur">Alltag &amp; Kultur</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-1.5"
+                >
+                  <Cloud className="w-4 h-4 text-emerald-200" />
+                  <span>Tageszitat Ersetzen &amp; Synchronisieren</span>
                 </button>
               </div>
             </form>

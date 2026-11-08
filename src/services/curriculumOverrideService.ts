@@ -16,12 +16,33 @@ export interface CustomQuizItem {
   createdAt: number;
 }
 
+export interface GermanQuote {
+  id: string;
+  german: string;
+  english: string;
+  author: string;
+  category?: string;
+  updatedAt: number;
+  updatedBy?: string;
+}
+
+export const DEFAULT_GERMAN_QUOTE: GermanQuote = {
+  id: 'daily-quote-slot',
+  german: "Es ist nicht genug zu wissen, man muss auch anwenden; es ist nicht genug zu wollen, man muss auch tun.",
+  english: "Knowing is not enough, we must apply; willing is not enough, we must do.",
+  author: "Johann Wolfgang von Goethe",
+  category: "Klassiker & Philosophie",
+  updatedAt: 1700000000000,
+  updatedBy: 'system'
+};
+
 export interface CurriculumOverrides {
   lessons: Record<string, Partial<Lesson>>;
   vocabulary: Record<string, Partial<VocabularyItem>>;
   newVocabulary: Record<string, VocabularyItem[]>; // lessonId -> new items
   customLessons: Lesson[];
   customQuizItems: CustomQuizItem[];
+  dailyQuote?: GermanQuote | null; // designated single daily quote slot
   lastSyncedAt?: number;
 }
 
@@ -32,6 +53,7 @@ class CurriculumOverrideService {
     newVocabulary: {},
     customLessons: [],
     customQuizItems: [],
+    dailyQuote: null,
     lastSyncedAt: Date.now()
   };
   private listeners: Set<() => void> = new Set();
@@ -56,6 +78,7 @@ class CurriculumOverrideService {
           newVocabulary: parsed.newVocabulary || {},
           customLessons: Array.isArray(parsed.customLessons) ? parsed.customLessons : [],
           customQuizItems: Array.isArray(parsed.customQuizItems) ? parsed.customQuizItems : [],
+          dailyQuote: parsed.dailyQuote || null,
           lastSyncedAt: parsed.lastSyncedAt || Date.now()
         };
       }
@@ -145,12 +168,21 @@ class CurriculumOverrideService {
             });
           }
 
+          // Single designated daily quote slot: merge newer or cloud if updated
+          let mergedDailyQuote = this.overrides.dailyQuote;
+          if (cloudData.dailyQuote) {
+            if (!mergedDailyQuote || (cloudData.dailyQuote.updatedAt >= (mergedDailyQuote.updatedAt || 0))) {
+              mergedDailyQuote = cloudData.dailyQuote;
+            }
+          }
+
           this.overrides = {
             lessons: { ...(cloudData.lessons || {}), ...this.overrides.lessons },
             vocabulary: { ...(cloudData.vocabulary || {}), ...this.overrides.vocabulary },
             newVocabulary: mergedNewVocab,
             customLessons: Array.from(localCustomLessonMap.values()),
             customQuizItems: Array.from(localQuizItemMap.values()),
+            dailyQuote: mergedDailyQuote,
             lastSyncedAt: Date.now()
           };
 
@@ -305,6 +337,33 @@ class CurriculumOverrideService {
     return this.overrides.customQuizItems || [];
   }
 
+  public getDailyQuote(): GermanQuote {
+    return this.overrides.dailyQuote || DEFAULT_GERMAN_QUOTE;
+  }
+
+  // Adding a new quote replaces the existing one in the single designated slot!
+  public setDailyQuote(
+    german: string,
+    english: string,
+    author?: string,
+    category?: string,
+    updatedBy?: string
+  ): GermanQuote {
+    const quote: GermanQuote = {
+      id: 'daily-quote-slot',
+      german: german.trim(),
+      english: english.trim(),
+      author: (author && author.trim()) || 'Deutsches Sprichwort',
+      category: (category && category.trim()) || 'Motivation & Weisheit',
+      updatedAt: Date.now(),
+      updatedBy: updatedBy || 'Benutzer'
+    };
+    // Replaces previous daily quote slot
+    this.overrides.dailyQuote = quote;
+    this.saveOverrides(true);
+    return quote;
+  }
+
   public resetAllOverrides() {
     this.overrides = {
       lessons: {},
@@ -312,6 +371,7 @@ class CurriculumOverrideService {
       newVocabulary: {},
       customLessons: [],
       customQuizItems: [],
+      dailyQuote: null,
       lastSyncedAt: Date.now()
     };
     if (typeof window !== 'undefined') {

@@ -6,6 +6,7 @@ let inMemoryCloudStore = {
   newVocabulary: {},
   customLessons: [],
   customQuizItems: [],
+  dailyQuote: null,
   lastSyncedAt: Date.now()
 };
 
@@ -69,6 +70,7 @@ export default async function handler(req, res) {
         newVocabulary: { ...(inMemoryCloudStore.newVocabulary || {}), ...(payload.newVocabulary || {}) },
         customLessons: payload.customLessons || inMemoryCloudStore.customLessons || [],
         customQuizItems: payload.customQuizItems || inMemoryCloudStore.customQuizItems || [],
+        dailyQuote: payload.dailyQuote !== undefined ? payload.dailyQuote : inMemoryCloudStore.dailyQuote,
         lastSyncedAt: Date.now()
       };
 

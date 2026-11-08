@@ -27,6 +27,7 @@ import { soundEffects } from '../services/soundEffects';
 import { srsService } from '../services/srsService';
 import { curriculumOverrideService } from '../services/curriculumOverrideService';
 import { EditContentModal } from './EditContentModal';
+import { DailyGermanQuoteWidget } from './DailyGermanQuoteWidget';
 
 const DAILY_GERMAN_WORDS: VocabularyItem[] = CURRICULUM_DATA.flatMap(l => l.vocabulary).filter(
   v => v.gender === 'der' || v.gender === 'die' || v.gender === 'das'
@@ -278,6 +279,9 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Prominent Daily German Quote Slot (Single Slot with Instant Replacement) */}
+      <DailyGermanQuoteWidget speechRate={speechRate} currentUser={currentUser} />
 
       {/* Daily German Word Flashcard Widget */}
       {dailyWord && (
