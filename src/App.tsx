@@ -140,7 +140,7 @@ export function App() {
   }, [allLessons]);
 
   return (
-    <div className="min-h-screen bg-[#fdef81] text-slate-900 flex flex-col font-sans selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen bg-gradient-to-b from-[#063826] via-[#042419] to-[#021710] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -221,26 +221,26 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-amber-300/80 bg-slate-950 text-slate-400 py-8 px-4 text-center text-xs mt-auto shadow-inner">
+      <footer className="border-t border-emerald-950/80 bg-[#021710]/95 py-8 px-4 text-center text-xs text-slate-400 mt-auto">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-200">Guten App: Deutsche Akademie</span>
-            <span className="text-slate-600">•</span>
+            <span className="font-bold text-slate-300">Guten App: Deutsche Akademie</span>
+            <span>•</span>
             <span className="text-slate-400">Autonome Plattform für deutsches Sprachtraining</span>
           </div>
 
           {/* Creator & Tester Credits */}
           <div className="flex items-center gap-2 text-slate-300">
             <span>Created by <strong className="font-bold text-slate-200">Anandovsky</strong></span>
-            <span className="text-slate-600">|</span>
+            <span className="text-slate-500">|</span>
             <span>Tester: <strong className="font-bold text-slate-200">Gayathri</strong></span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-400">
             <span>CEFR A1 – C1</span>
-            <span className="text-slate-600">•</span>
+            <span>•</span>
             <span>Web Speech API (TTS &amp; STT de-DE)</span>
-            <span className="text-slate-600">•</span>
+            <span>•</span>
             <span>Leitner SRS Deck &amp; Fehler-Tresor</span>
           </div>
         </div>
