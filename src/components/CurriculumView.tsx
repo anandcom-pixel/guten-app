@@ -222,16 +222,16 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
   return (
     <div className="space-y-8 animate-in fade-in pb-16">
       {/* Hero Intro Section */}
-      <div className="relative rounded-3xl bg-gradient-to-r from-slate-900 via-emerald-950/80 to-slate-900 border border-amber-500/30 p-6 sm:p-8 overflow-hidden shadow-2xl">
+      <div className="relative rounded-3xl bg-gradient-to-r from-slate-900 via-emerald-950/80 to-slate-900 border border-amber-500/30 p-4 sm:p-8 overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold tracking-wide uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 Welcome • Start Learning Instantly
               </span>
-              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              <span className="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                 ★ A1 (Anfänger) Pre-Opened Below
               </span>
               <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800/90 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
@@ -239,7 +239,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                 {totalCompletedCount}/{totalLessonsCount} Modules Completed
               </span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
               Interactive German Lessons &amp; Pronunciation Practice from A1 to C1
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
@@ -365,7 +365,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
             Active Level: {CEFR_METADATA[selectedLevel]?.name}
           </span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
           {levels.map(lvl => {
             const isSelected = selectedLevel === lvl;
             const meta = CEFR_METADATA[lvl];
@@ -388,7 +388,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                 key={lvl}
                 type="button"
                 onClick={() => handleLevelChange(lvl)}
-                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden transform hover:-translate-y-0.5 ${
+                className={`p-3 sm:p-4 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden transform hover:-translate-y-0.5 last:col-span-2 sm:last:col-span-1 ${
                   isSelected
                     ? 'bg-slate-900 border-amber-500/90 shadow-xl shadow-amber-500/15 ring-2 ring-amber-500/50'
                     : 'bg-slate-900/70 border-slate-800 hover:bg-slate-900 hover:border-slate-600 text-slate-300 hover:shadow-md'
@@ -568,7 +568,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
         {/* Right Side: Active Lesson Comprehensive Content */}
         <div className="lg:col-span-8 space-y-6">
           {/* Lesson Header Card */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+          <div className="p-4 sm:p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
@@ -957,7 +957,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
 
           {/* Interactive Dialogue Section */}
           {currentLesson.dialogue && (
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+            <div className="p-4 sm:p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -975,7 +975,7 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                 <button
                   type="button"
                   onClick={handlePlayDialogue}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transform hover:-translate-y-0.5 transition-all duration-200 ${
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transform hover:-translate-y-0.5 transition-all duration-200 ${
                     isPlayingDialogue
                       ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 animate-pulse'
                       : 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/25'
@@ -1004,12 +1004,12 @@ export const CurriculumView: React.FC<CurriculumViewProps> = ({
                   return (
                     <div
                       key={idx}
-                      className={`p-4 rounded-2xl border transition-all ${
+                      className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
                         isActive
                           ? 'bg-amber-950/40 border-amber-500 shadow-md ring-1 ring-amber-500/40'
                           : isFirstSpeaker
                           ? 'bg-slate-950/60 border-slate-800/80'
-                          : 'bg-slate-900/80 border-slate-800/80 ml-4 sm:ml-8'
+                          : 'bg-slate-900/80 border-slate-800/80 ml-2 sm:ml-8'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
